@@ -16,30 +16,22 @@ XSetWindowAttributes swa;
 XWindowAttributes gwa;
 XEvent xev;
 float nearfar;
-bool move=false;
-bool sphereup=false;
-bool spheredown=false;
-bool sphereleft=false;
-bool sphereright=false;
+
 float z_index=0.0;
 float y_index=0.0;
 float x_index=0.0;
-int clear=0;
-typedef struct{
-  int X,Y,Z;
-  float U,V;
-  
-}VERTICES;
-VERTICES vert;
+float z2_index=1.0;
+float y2_index=1.0;
+float x2_index=1.0;
+
 typedef struct{
  float x,y,z;
 }CIRCLE;
 
 GLuint texture[1];
-float sphereang=0;
+
 const int spacing=18;//SPACE OUT VERTICES
-const int VertexCount=(90/spacing)*(360/spacing)*4;
-VERTICES VERTEX[VertexCount];//
+
 CIRCLE circ[360/spacing][360/spacing];
 static int GLAttr[]={
  GLX_RGBA,
@@ -50,8 +42,7 @@ static int GLAttr[]={
  GLX_DOUBLEBUFFER,
  None
 };
-GLuint vao,buffers[2],matrixlocation;
-
+float angle=1;
 
 //////////////////////////
 //        PROTOTYPES
@@ -120,13 +111,18 @@ void shapeView(){//setup initial camera view
 
  glClearColor(0,0,0,1);//cyan clear color
  glClearDepth(100.0);
+
+ 
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
  gluPerspective(30,1,0.001,100.0);
- 
+
+
  glMatrixMode(GL_MODELVIEW);
  glLoadIdentity();
  glTranslatef(0,0,-10);
+
+
  makeSphere(30,0,0,0);
  makeCircle();
  glLineWidth(50);
@@ -139,15 +135,22 @@ void reshapeView(){
  
  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+ glPushMatrix();
+ glTranslatef(x_index,0,z_index);
+ glScalef(.5,.5,.5); 
+ glRotatef(angle,0,1,0);
+ drawThis(3);
+ glPopMatrix();
 
- drawThis(2);
- glScalef(.5,.5,.5);
- 
+ glPushMatrix();
+ glTranslatef(x2_index,0,z2_index);
+ glScalef(.5,.5,.5); 
+ glRotatef(-angle,0,1,0);
+ drawThis(3);
+ glPopMatrix();
 
- glTranslatef(0,0,-0.001);
- glFlush();
  glXSwapBuffers(dpy,win);
-
+ angle++;
 }
 
 //////////////////////////
@@ -172,21 +175,34 @@ void renderLoop(){
      XCloseDisplay(dpy);
      exit(0);
     }
-    if(keysym==XK_Up){
-     z_index+=1;
-     sphereup=true;
-    }
-    if(keysym==XK_Left){
-     x_index-=1;
-     sphereleft=true;
-    }
-    if(keysym==XK_Right){
-     x_index+=1;
-     sphereright=true;
-    }
-    if(keysym==XK_Down){
-     z_index-=1;
-     spheredown=true;
+    switch(keysym){
+     case XK_Up:
+      z_index-=1;
+      break;
+     case XK_Down:
+      z_index+=1;
+      break;
+     case XK_Left:
+      x_index-=1;
+      break;
+     case XK_Right:
+      x_index+=1;
+      break;
+
+     case XK_w:
+      z2_index-=1;
+      break;
+     case XK_s:
+      z2_index+=1;
+      break;
+     case XK_a:
+      x2_index-=1;
+      break;
+     case XK_d:
+      x2_index+=1;
+      break;
+
+
     }
 
     
@@ -257,20 +273,13 @@ void drawThis(int which){
    glEnd();
    break;
   case 2:
-   //float R=5;
+   glBegin(GL_TRIANGLE_STRIP);
+
+   glEnd();
 
    
    
-   glBegin(GL_TRIANGLE_STRIP);
-    for(int b=0; b<=VertexCount;++b){
-     glColor3f(1,0,0);
-     glVertex3f(VERTEX[b].X,VERTEX[b].Y,-VERTEX[b].Z);
-    }
-    for(int b=0; b<=VertexCount;++b){
-     glColor3f(1,0,0);
-     glVertex3f(VERTEX[b].X,VERTEX[b].Y,VERTEX[b].Z);
-    }
-   glEnd();
+   
    break;
   case 3:
    for(int a=0;a<360/spacing;++a){
@@ -282,11 +291,11 @@ void drawThis(int which){
      
      for(int b=0;b<360/spacing;++b){
       glColor3f(1,0,0);
-      glVertex3f(circ[a][b].x+x_index,circ[a][b].y,circ[a][b].z-z_index);
+      glVertex3f(circ[a][b].x,circ[a][b].y,circ[a][b].z);
       glColor3f(0,1,0);
-      glVertex3f(circ[a][b+1].x+x_index,circ[a][b+1].y,circ[a][b+1].z-z_index);
+      glVertex3f(circ[a][b+1].x,circ[a][b+1].y,circ[a][b+1].z);
       glColor3f(0,0,1);
-      glVertex3f(circ[a+1][b+1].x+x_index,circ[anext][b+1].y,circ[a+1][b+1].z-z_index);
+      glVertex3f(circ[a+1][b+1].x,circ[anext][b+1].y,circ[a+1][b+1].z);
      }
     glEnd();
    }    
@@ -316,34 +325,5 @@ void makeCircle(){
 //////////////////////////
 //(number of subdivisions,xpos,ypos,zpos)
 void makeSphere(float R,float H, float K, float Z){
- int n;//the current vertex being worked on
- float a,b;//loop counters
- n=0;//start with first vertex
- for(b=0;b<=90-spacing;b+=spacing){
-  for(a=0;a<=360-spacing;a+=spacing){
-   VERTEX[n].X=R*sin((a)/180*M_PI)*sin((b)/180*M_PI)-H;
-   VERTEX[n].Y=R*cos((a)/180*M_PI)*cos((b)/180*M_PI)+K;
-   VERTEX[n].Z=R*cos((b)/180*M_PI)-Z;
-
-   VERTEX[n].V=(2*b)/360;
-   VERTEX[n].U=(a)/360;
-   ++n;
-
-   VERTEX[n].X=R*sin((a)/180*M_PI)*sin((b+spacing)/180*M_PI)-H;
-   VERTEX[n].Y=R*cos((a)/180*M_PI)*cos((b+spacing)/180*M_PI)+K;
-   VERTEX[n].Z=R*cos((b+spacing)/180*M_PI)-Z;
-
-   VERTEX[n].V=(2*(b+spacing))/360;
-   VERTEX[n].U=(a)/360;
-   ++n;
-
-   VERTEX[n].X=R*sin((a+spacing)/180*M_PI)*sin((b)/180*M_PI)-H;
-   VERTEX[n].Y=R*cos((a+spacing)/180*M_PI)*cos((b)/180*M_PI)+K;
-   VERTEX[n].Z=R*cos((b)/180*M_PI)-Z;
-
-   VERTEX[n].V=(2*b)/360;
-   VERTEX[n].U=(a+spacing)/360;
-   ++n;
-  }
- }
+ 
 }

@@ -15,7 +15,7 @@ GLXContext glc;
 XSetWindowAttributes swa;
 XWindowAttributes gwa;
 XEvent xev;
-float nearfar;
+float angle1,angle2;
 
 float z_index=0.0;
 float y_index=0.0;
@@ -23,14 +23,14 @@ float x_index=0.0;
 float z2_index=1.0;
 float y2_index=1.0;
 float x2_index=1.0;
-
+float definition=.25;
 typedef struct{
  float x,y,z;
 }CIRCLE;
 
 GLuint texture[1];
 
-const int spacing=18;//SPACE OUT VERTICES
+const int spacing=72;//SPACE OUT VERTICES
 
 CIRCLE circ[360/spacing][360/spacing];
 static int GLAttr[]={
@@ -53,7 +53,7 @@ void renderLoop();
 void drawThis(int);
 void checkKeyEvents();
 void reshapeView();
-void makeSphere(float,float,float,float);
+void makeSphere();
 void makeCircle();
 
 //////////////////////////
@@ -101,7 +101,7 @@ void setupWindow(){
 //        SHAPE VIEW && RESHAPE VIEW
 //////////////////////////////////////
 void shapeView(){//setup initial camera view
- nearfar=-2;
+
  
  glEnable(GL_DEPTH_TEST);
  glCullFace(GL_BACK);//
@@ -123,7 +123,7 @@ void shapeView(){//setup initial camera view
  glTranslatef(0,0,-10);
 
 
- makeSphere(30,0,0,0);
+ makeSphere();
  makeCircle();
  glLineWidth(50);
  //
@@ -139,14 +139,14 @@ void reshapeView(){
  glTranslatef(x_index,0,z_index);
  glScalef(.5,.5,.5); 
  glRotatef(angle,0,1,0);
- drawThis(3);
+ drawThis(2);
  glPopMatrix();
 
  glPushMatrix();
  glTranslatef(x2_index,0,z2_index);
- glScalef(.5,.5,.5); 
- glRotatef(-angle,0,1,0);
- drawThis(3);
+ //glScalef(.5,.5,.5); 
+ glRotatef(-angle,1,0,0);
+ drawThis(2);
  glPopMatrix();
 
  glXSwapBuffers(dpy,win);
@@ -227,40 +227,40 @@ void drawThis(int which){
   case 0:
    glBegin(GL_QUADS);
     glColor3f(1.0f,0.0f,0.0f);
-    glVertex3f( 1.0f+x_index, 1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index, 1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index, 1.0f, 1.0f-z_index);
-    glVertex3f( 1.0f+x_index, 1.0f, 1.0f-z_index);
+    glVertex3f( 1.0f, 1.0f,-1.0f);
+    glVertex3f(-1.0f, 1.0f,-1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glVertex3f( 1.0f, 1.0f, 1.0f);
 
     glColor3f(0.0f,1.0f,0.0f);
-    glVertex3f( 1.0f+x_index,-1.0f, 1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f, 1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f,-1.0f-z_index);
-    glVertex3f( 1.0f+x_index,-1.0f,-1.0f-z_index);
+    glVertex3f( 1.0f,-1.0f, 1.0f);
+    glVertex3f(-1.0f,-1.0f, 1.0f);
+    glVertex3f(-1.0f,-1.0f,-1.0f);
+    glVertex3f( 1.0f,-1.0f,-1.0f);
 
     glColor3f(0.0f,0.0f,1.0f);
-    glVertex3f( 1.0f+x_index, 1.0f, 1.0f-z_index);
-    glVertex3f(-1.0f+x_index, 1.0f, 1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f, 1.0f-z_index);
-    glVertex3f( 1.0f+x_index,-1.0f, 1.0f-z_index);
+    glVertex3f( 1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f,-1.0f, 1.0f);
+    glVertex3f( 1.0f,-1.0f, 1.0f);
 
     glColor3f(1.0f,1.0f,1.0f);
-    glVertex3f( 1.0f+x_index,-1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index, 1.0f,-1.0f-z_index);
-    glVertex3f( 1.0f+x_index, 1.0f,-1.0f-z_index);
+    glVertex3f( 1.0f,-1.0f,-1.0f);
+    glVertex3f(-1.0f,-1.0f,-1.0f);
+    glVertex3f(-1.0f, 1.0f,-1.0f);
+    glVertex3f( 1.0f, 1.0f,-1.0f);
 
     glColor3f(1.0f,1.0f,1.0f);
-    glVertex3f(-1.0f+x_index, 1.0f, 1.0f-z_index);
-    glVertex3f(-1.0f+x_index, 1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f,-1.0f-z_index);
-    glVertex3f(-1.0f+x_index,-1.0f, 1.0f-z_index);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f,-1.0f);
+    glVertex3f(-1.0f,-1.0f,-1.0f);
+    glVertex3f(-1.0f,-1.0f, 1.0f);
 
     glColor3f(1.0f,0.0f,1.0f);
-    glVertex3f( 1.0f+x_index, 1.0f,-1.0f-z_index);
-    glVertex3f( 1.0f+x_index, 1.0f, 1.0f-z_index);
-    glVertex3f( 1.0f+x_index,-1.0f, 1.0f-z_index);
-    glVertex3f( 1.0f+x_index,-1.0f,-1.0f-z_index);
+    glVertex3f( 1.0f, 1.0f,-1.0f);
+    glVertex3f( 1.0f, 1.0f, 1.0f);
+    glVertex3f( 1.0f,-1.0f, 1.0f);
+    glVertex3f( 1.0f,-1.0f,-1.0f);
    glEnd();
    break;
   case 1:
@@ -273,10 +273,16 @@ void drawThis(int which){
    glEnd();
    break;
   case 2:
-   glBegin(GL_TRIANGLE_STRIP);
-
-   glEnd();
-
+   
+   for(angle2=-M_PI/2;angle2<M_PI/2;angle2+=definition){
+    glBegin(GL_QUAD_STRIP); 
+     for(angle1=0.0;angle1<=M_PI*2+definition;angle1+=definition){
+      glColor3f(cos(angle2)*cos(angle1),sin(angle2),cos(angle2)*sin(angle1));
+      glVertex3f(cos(angle2)*cos(angle1),sin(angle2),cos(angle2)*sin(angle1));
+      glVertex3f(cos(angle2+definition)*cos(angle1),sin(angle2+definition),cos(angle2+definition)*sin(angle1));
+     }    
+    glEnd();
+   }
    
    
    
@@ -324,6 +330,6 @@ void makeCircle(){
 //        SPHERE GEOMETRY
 //////////////////////////
 //(number of subdivisions,xpos,ypos,zpos)
-void makeSphere(float R,float H, float K, float Z){
+void makeSphere(){
  
 }
